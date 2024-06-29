@@ -1,0 +1,41 @@
+
+##SFML_Shapes##
+
+Specification:
+Read the description of the shapes from a configuration file and draw them to the screen. Each shape will have a name position speed color as well as properties unique to each shape style.
+
+The shapes will have to bounce of the wall which mean when the left side of a shape its the left side of the window the X speed is reversed. If the top hits the top the Y speed reverses.
+
+Each shape name should be drown on the exact center of the shape in the given font size and color specified in the file.
+
+Implement an ImGui user interface which is able to:
+    list all the shapes and select any one of them to edit their properties
+    toggle wether or not the selected shape will be drawn
+    change the scale of the shape (0 to 4)
+    change the x and y velocity (-8 to 8)
+    change the color
+    change the name
+
+Config explained:
+    Window W H
+    W = Width
+    H = Height
+
+    Font F S R G B
+    F = font file
+    S = size
+    RGB = color
+
+    Rectangle  N X Y SX SY R G B W H
+    N = name
+    X, Y = position 
+    SX, SY = speed
+    RGB = color
+    W, H = width Height
+
+    Circle N X Y SX SY R G B R
+    N = name
+    X, Y = position 
+    SX, SY = speed
+    RGB = color
+    R = radios
