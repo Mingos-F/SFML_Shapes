@@ -7,12 +7,138 @@
 #include <imgui.h>
 #include <imgui-SFML.h>
 
+// classes
+
+class MyFont
+{
+    sf::Font m_Font;
+    std::string m_path;
+    int m_size, m_r, m_g, m_b;
+
+public:
+    MyFont() {}
+
+    const sf::Font &getFont() { return m_Font; }
+    std::string &getPath() { return m_path; }
+    const int &getSize() { return m_size; }
+    const int &getRed() { return m_r; }
+    const int &getGreen() { return m_g; };
+    const int &getBlue() { return m_b; }
+
+    void readFromFile(std::ifstream &fin)
+    {
+        fin >> m_path >> m_size >> m_r >> m_g >> m_b;
+
+        // attempt to load font from file
+        if (!m_Font.loadFromFile(m_path))
+        {
+            std::cerr << "Failed to load the font" << std::endl;
+            exit(-1);
+        }
+    }
+};
+
+class Rectangle
+{
+    sf::RectangleShape m_shape;
+    sf::Text m_text;
+    float m_x, m_y, m_sx, m_sy, m_width, m_height;
+    int m_r, m_g, m_b;
+
+public:
+    Rectangle()
+    {
+    }
+
+    void readFromFile(std::ifstream &fin)
+    {
+        // helper var so store the name
+        std::string name;
+
+        fin >> name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_width >> m_height;
+        m_text.setString(name);
+        m_shape.setSize(sf::Vector2f(m_width, m_height));
+        m_shape.setPosition(sf::Vector2f(m_x, m_y));
+        m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
+    }
+};
+
+class Circle
+{
+    sf::CircleShape m_shape;
+    sf::Text m_text;
+    float m_x, m_y, m_sx, m_sy, m_radius;
+    int m_r, m_g, m_b;
+
+public:
+    Circle()
+    {
+    }
+
+    void readFromFile(std::ifstream &fin)
+    {
+        // helper var so store the name
+        std::string name;
+
+        fin >> name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_radius;
+        m_text.setString(name);
+        m_shape.setRadius(m_radius);
+        m_shape.setPosition(sf::Vector2f(m_x, m_y));
+        m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
+    }
+};
+
 int main(int argc, char const *argv[])
 {
+    // my font class
+    MyFont font;
+
+    // sfml video mode object to create the window with res from file
+    sf::VideoMode videoMode;
+
+    // vectors to store the shapes
+    std::vector<Rectangle> rectangles;
+    std::vector<Circle> circles;
+
+    // helper variable to id what is read from the file;
+    std::string id;
+
+    // read from file
+
+    std::ifstream fin("config.txt");
+
+    if (!fin)
+    {
+        std::cerr << "Failed to open the configuration file" << std::endl;
+        exit(-1);
+    }
+
+    while (fin >> id)
+    {
+        if (id == "Window")
+        {
+            fin >> videoMode.width >> videoMode.height;
+        }
+        else if (id == "Fonts")
+        {
+            font.readFromFile(fin);
+        }
+        else if (id == "Circle")
+        {
+            Circle circle;
+            circle.readFromFile(fin);
+            circles.push_back(circle);
+        }
+        else
+        {
+            Rectangle rectangle;
+            rectangle.readFromFile(fin);
+            rectangles.push_back(rectangle);
+        }
+    }
+
     // create the window with the width and height from the file
-    const int wWidth = 1280;
-    const int wHeight = 720;
-    sf::RenderWindow window(sf::VideoMode(wWidth, wHeight), "SFML_Shapes");
+    sf::RenderWindow window(videoMode, "SFML_Shapes");
     window.setFramerateLimit(60);
 
     // initialize IMGUI and create a clock used for internal timing
@@ -44,22 +170,13 @@ int main(int argc, char const *argv[])
     sf::CircleShape circle(circleRadius, circleSegments);
     circle.setPosition(10.0f, 10.0f);
 
-    // load a font
-    sf::Font myFont;
-
-    // attempt to load font from file
-    if (!myFont.loadFromFile("fonts/tech.ttf"))
-    {
-        std::cerr << "Failed to load the font" << std::endl;
-        exit(-1);
-    }
-
     // set up the text object that will be drawn on the screen
-    sf::Text text("Sample text", myFont, 24);
+    sf::Text text("Sample text", font.getFont(), font.getSize());
+    text.setFillColor(sf::Color(font.getRed(), font.getGreen(), font.getBlue()));
 
     // position the bottom-left corner of the text so that the text aligns on the bottom
     //  text character size is in pixels so move the text up the bottom by its height
-    text.setPosition(0, wHeight - (float)text.getCharacterSize());
+    text.setPosition(0, videoMode.height - (float)text.getCharacterSize());
 
     // set up a character array for the text
     char displayString[255] = "Sample text";
