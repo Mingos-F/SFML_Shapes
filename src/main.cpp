@@ -44,6 +44,8 @@ class Rectangle
     sf::Text m_text;
     float m_x, m_y, m_sx, m_sy, m_width, m_height;
     int m_r, m_g, m_b;
+    bool m_isShapeDrawn = true;
+    float m_uiColor[3]{0.0f};
 
 public:
     Rectangle()
@@ -61,6 +63,8 @@ public:
     int &getRed() { return m_r; }
     int &getGreen() { return m_g; };
     int &getBlue() { return m_b; }
+    bool &getIsShapeDrawn() { return m_isShapeDrawn; }
+    float *getUiColor() { return m_uiColor; }
 
     void createText(const MyFont &font)
     {
@@ -69,6 +73,10 @@ public:
         m_text.setFillColor(sf::Color(font.getRed(), font.getGreen(), font.getBlue()));
 
         m_text.setPosition(sf::Vector2f(m_x + (m_width / 2) - (m_text.getGlobalBounds().width / 2), m_y + (m_height / 2) - (m_text.getGlobalBounds().height / 2)));
+
+        m_uiColor[0] = m_r / 255;
+        m_uiColor[1] = m_g / 255;
+        m_uiColor[2] = m_b / 255;
     }
 
     void readFromFile(std::ifstream &fin)
@@ -87,12 +95,12 @@ public:
     {
         sf::Vector2f previousPos = m_shape.getPosition();
 
-        if (previousPos.x < 0 || (previousPos.x + m_width) > videoMode.width)
+        if (previousPos.x < 0 || (previousPos.x + (m_width * m_shape.getScale().x)) > videoMode.width)
         {
             m_sx *= -1.0f;
         }
 
-        if (previousPos.y < 0 || (previousPos.y + m_height) > videoMode.height)
+        if (previousPos.y < 0 || (previousPos.y + (m_height * m_shape.getScale().x)) > videoMode.height)
         {
             m_sy *= -1.0f;
         }
@@ -102,9 +110,15 @@ public:
 
         m_shape.setPosition(newPosShape);
         m_text.setPosition(newPosText);
+        centerText();
 
         window.draw(m_shape);
         window.draw(m_text);
+    }
+
+    void centerText()
+    {
+        m_text.setPosition(sf::Vector2f(m_shape.getPosition().x + ((m_width / 2) * m_shape.getScale().x) - (m_text.getGlobalBounds().width / 2), m_shape.getPosition().y + ((m_height / 2) * m_shape.getScale().y) - (m_text.getGlobalBounds().height / 2)));
     }
 };
 
@@ -114,6 +128,8 @@ class Circle
     sf::Text m_text;
     float m_x, m_y, m_sx, m_sy, m_radius;
     int m_r, m_g, m_b;
+    bool m_isShapeDrawn = true;
+    float m_uiColor[3]{0.0f};
 
 public:
     Circle()
@@ -128,8 +144,10 @@ public:
     float &getSpeedY() { return m_sy; }
     float &getRadius() { return m_radius; }
     int &getRed() { return m_r; }
-    int &getGreen() { return m_g; };
+    int &getGreen() { return m_g; }
     int &getBlue() { return m_b; }
+    bool &getIsShapeDrawn() { return m_isShapeDrawn; }
+    float *getUiColor() { return m_uiColor; }
 
     void createText(const MyFont &font)
     {
@@ -150,18 +168,22 @@ public:
         m_shape.setRadius(m_radius);
         m_shape.setPosition(sf::Vector2f(m_x, m_y));
         m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
+
+        m_uiColor[0] = m_r / 255;
+        m_uiColor[1] = m_g / 255;
+        m_uiColor[2] = m_b / 255;
     }
 
     void drawAnimation(sf::RenderWindow &window, sf::VideoMode &videoMode)
     {
         sf::Vector2f previousPos = m_shape.getPosition();
 
-        if (previousPos.x < 0 || (previousPos.x + (m_radius * 2)) > videoMode.width)
+        if (previousPos.x < 0 || (previousPos.x + (m_radius * 2 * m_shape.getScale().x)) > videoMode.width)
         {
             m_sx *= -1.0f;
         }
 
-        if (previousPos.y < 0 || (previousPos.y + (m_radius * 2)) > videoMode.height)
+        if (previousPos.y < 0 || (previousPos.y + (m_radius * 2 * m_shape.getScale().y)) > videoMode.height)
         {
             m_sy *= -1.0f;
         }
@@ -170,10 +192,17 @@ public:
         sf::Vector2f newPosText(m_text.getPosition().x + m_sx, m_text.getPosition().y + m_sy);
 
         m_shape.setPosition(newPosShape);
+
         m_text.setPosition(newPosText);
+        centerText();
 
         window.draw(m_shape);
         window.draw(m_text);
+    }
+
+    void centerText()
+    {
+        m_text.setPosition(sf::Vector2f(m_shape.getPosition().x + (m_radius * m_shape.getScale().x) - (m_text.getGlobalBounds().width / 2), m_shape.getPosition().y + (m_radius * m_shape.getScale().y) - (m_text.getGlobalBounds().height / 2)));
     }
 };
 
@@ -299,57 +328,96 @@ int main(int argc, char const *argv[])
         // update imgui for this frame with the time that the last frame took
         ImGui::SFML::Update(window, deltaClock.restart());
 
+        // ImGui::ShowDemoWindow();
+
         // draw the UI
         ImGui::Begin("window title");
-        ImGui::Text("window text");
-        ImGui::Checkbox("draw circle", &drawCircle);
-        ImGui::SameLine();
-        ImGui::Checkbox("draw text", &drawText);
-        ImGui::SliderFloat("radius", &circleRadius, 0.0f, 200.0f);
-        ImGui::SliderInt("Sides", &circleSegments, 3, 64);
-        ImGui::ColorEdit3("color circle", c);
-        ImGui::InputText("bottom text", displayString, 255);
-        if (ImGui::Button("set text"))
-        {
-            text.setString(displayString);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("reset circle"))
-        {
-            circle.setPosition(0, 0);
-        }
-        ImGui::End();
 
-        // set the circle properties, because the might have been updated with the gui
-        circle.setFillColor(sf::Color(c[0] * 255, c[1] * 255, c[2] * 255));
-        circle.setPointCount(circleSegments);
-        circle.setRadius(circleRadius);
-
-        // basic animation
-        circle.setPosition(circle.getPosition().x + circleSpeedX, circle.getPosition().y + circleSpeedY);
-
-        // basic rendering functions
-        window.clear();
-
-        if (drawCircle)
-        {
-            // draw the circle
-            window.draw(circle);
-        }
-
-        if (drawText)
-        {
-            window.draw(text);
-        }
+        std::vector<std::string> shapes;
 
         for (auto &shape : circles)
         {
-            shape.drawAnimation(window, videoMode);
+            shapes.push_back(shape.getText().getString());
         }
 
         for (auto &shape : rectangles)
         {
-            shape.drawAnimation(window, videoMode);
+            shapes.push_back(shape.getText().getString());
+        }
+
+        static int currentIndex = 0;
+        // Pass in the preview value visible before opening the combo
+        const char *combo_preview_value = shapes[currentIndex].c_str();
+        if (ImGui::BeginCombo("Shapes", combo_preview_value))
+        {
+            for (int i = 0; i < shapes.size(); i++)
+            {
+                const bool isSelected = (currentIndex == i);
+                if (ImGui::Selectable(shapes[i].c_str(), isSelected))
+                    currentIndex = i;
+
+                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (currentIndex > circles.size() - 1)
+        {
+
+            int tempIndex = currentIndex - circles.size();
+
+            float uiScale = rectangles[tempIndex].getShape().getScale().x;
+
+            ImGui::Checkbox("draw rectangle?", &rectangles[tempIndex].getIsShapeDrawn());
+            ImGui::SliderFloat("Scale", &uiScale, 0.0f, 4.0f);
+            ImGui::SliderFloat("X velocity", &rectangles[tempIndex].getSpeedX(), -8.0f, 8.0f);
+            ImGui::SliderFloat("Y velocity", &rectangles[tempIndex].getSpeedY(), -8.0f, 8.0f);
+            ImGui::ColorEdit3("Color", rectangles[tempIndex].getUiColor());
+
+            ImGui::End();
+
+            // set the circle properties, because the might have been updated with the gui
+            rectangles[tempIndex].getShape().setFillColor(sf::Color(rectangles[tempIndex].getUiColor()[0] * 255, rectangles[tempIndex].getUiColor()[1] * 255, rectangles[tempIndex].getUiColor()[2] * 255));
+            rectangles[tempIndex].getShape().setScale(sf::Vector2f(uiScale, uiScale));
+        }
+        else
+        {
+
+            // helper variables
+            float uiScale = circles[currentIndex].getShape().getScale().x;
+
+            ImGui::Checkbox("draw circle?", &circles[currentIndex].getIsShapeDrawn());
+            ImGui::SliderFloat("Scale", &uiScale, 0.0f, 4.0f);
+            ImGui::SliderFloat("X velocity", &circles[currentIndex].getSpeedX(), -8.0f, 8.0f);
+            ImGui::SliderFloat("Y velocity", &circles[currentIndex].getSpeedY(), -8.0f, 8.0f);
+            ImGui::ColorEdit3("Color", circles[currentIndex].getUiColor());
+
+            ImGui::End();
+
+            // set the circle properties, because the might have been updated with the gui
+            circles[currentIndex].getShape().setFillColor(sf::Color(circles[currentIndex].getUiColor()[0] * 255, circles[currentIndex].getUiColor()[1] * 255, circles[currentIndex].getUiColor()[2] * 255));
+            circles[currentIndex].getShape().setScale(sf::Vector2f(uiScale, uiScale));
+        }
+
+        // basic rendering functions
+        window.clear();
+
+        for (auto &shape : circles)
+        {
+            if (shape.getIsShapeDrawn())
+            {
+                shape.drawAnimation(window, videoMode);
+            }
+        }
+
+        for (auto &shape : rectangles)
+        {
+            if (shape.getIsShapeDrawn())
+            {
+                shape.drawAnimation(window, videoMode);
+            }
         }
 
         ImGui::SFML::Render(window);
