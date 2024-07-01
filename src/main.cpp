@@ -305,7 +305,7 @@ int main(int argc, char const *argv[])
         // ImGui::ShowDemoWindow();
 
         // draw the UI
-        ImGui::Begin("window title");
+        ImGui::Begin("Control Panel");
 
         std::vector<std::string> shapes;
 
