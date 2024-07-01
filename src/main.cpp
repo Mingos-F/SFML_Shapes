@@ -276,32 +276,6 @@ int main(int argc, char const *argv[])
     // scale the imgui ui by a given factor, does not affect text size
     ImGui::GetStyle().ScaleAllSizes(1.0f);
 
-    // the imgui color r,g,b wheel requires floats from 0-1 instead of ints from 0-255
-    float c[3] = {0.0f, 1.0f, 1.0f};
-
-    // make a shape that will draw to the screen
-    float circleRadius = 50;
-    int circleSegments = 32;
-    float circleSpeedX = 1.0f;
-    float circleSpeedY = .5f;
-    bool drawCircle = true;
-    bool drawText = true;
-
-    // create the sfml circle shape based on our parameters
-    sf::CircleShape circle(circleRadius, circleSegments);
-    circle.setPosition(10.0f, 10.0f);
-
-    // set up the text object that will be drawn on the screen
-    sf::Text text("Sample text", font.getFont(), font.getSize());
-    text.setFillColor(sf::Color(font.getRed(), font.getGreen(), font.getBlue()));
-
-    // position the bottom-left corner of the text so that the text aligns on the bottom
-    //  text character size is in pixels so move the text up the bottom by its height
-    text.setPosition(0, videoMode.height - (float)text.getCharacterSize());
-
-    // set up a character array for the text
-    char displayString[255] = "Sample text";
-
     // main loop - continues for each frame the window is open
     while (window.isOpen())
     {
