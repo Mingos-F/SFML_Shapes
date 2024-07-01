@@ -18,12 +18,12 @@ class MyFont
 public:
     MyFont() {}
 
-    const sf::Font &getFont() { return m_Font; }
-    std::string &getPath() { return m_path; }
-    const int &getSize() { return m_size; }
-    const int &getRed() { return m_r; }
-    const int &getGreen() { return m_g; };
-    const int &getBlue() { return m_b; }
+    const sf::Font &getFont() const { return m_Font; }
+    const std::string &getPath() const { return m_path; }
+    const int &getSize() const { return m_size; }
+    const int &getRed() const { return m_r; }
+    const int &getGreen() const { return m_g; };
+    const int &getBlue() const { return m_b; }
 
     void readFromFile(std::ifstream &fin)
     {
@@ -50,6 +50,27 @@ public:
     {
     }
 
+    sf::RectangleShape &getShape() { return m_shape; }
+    sf::Text &getText() { return m_text; }
+    float &getX() { return m_x; }
+    float &getY() { return m_y; }
+    float &getSpeedX() { return m_sx; }
+    float &getSpeedY() { return m_sy; }
+    float &getWidth() { return m_width; }
+    float &getHeight() { return m_height; }
+    int &getRed() { return m_r; }
+    int &getGreen() { return m_g; };
+    int &getBlue() { return m_b; }
+
+    void createText(const MyFont &font)
+    {
+        m_text.setFont(font.getFont());
+        m_text.setCharacterSize(font.getSize());
+        m_text.setFillColor(sf::Color(font.getRed(), font.getGreen(), font.getBlue()));
+
+        m_text.setPosition(sf::Vector2f(m_x + (m_width / 2) - (m_text.getGlobalBounds().width / 2), m_y + (m_height / 2) - (m_text.getGlobalBounds().height / 2)));
+    }
+
     void readFromFile(std::ifstream &fin)
     {
         // helper var so store the name
@@ -60,6 +81,30 @@ public:
         m_shape.setSize(sf::Vector2f(m_width, m_height));
         m_shape.setPosition(sf::Vector2f(m_x, m_y));
         m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
+    }
+
+    void drawAnimation(sf::RenderWindow &window, sf::VideoMode &videoMode)
+    {
+        sf::Vector2f previousPos = m_shape.getPosition();
+
+        if (previousPos.x < 0 || (previousPos.x + m_width) > videoMode.width)
+        {
+            m_sx *= -1.0f;
+        }
+
+        if (previousPos.y < 0 || (previousPos.y + m_height) > videoMode.height)
+        {
+            m_sy *= -1.0f;
+        }
+
+        sf::Vector2f newPosShape(m_shape.getPosition().x + m_sx, m_shape.getPosition().y + m_sy);
+        sf::Vector2f newPosText(m_text.getPosition().x + m_sx, m_text.getPosition().y + m_sy);
+
+        m_shape.setPosition(newPosShape);
+        m_text.setPosition(newPosText);
+
+        window.draw(m_shape);
+        window.draw(m_text);
     }
 };
 
@@ -75,6 +120,26 @@ public:
     {
     }
 
+    sf::CircleShape &getShape() { return m_shape; }
+    sf::Text &getText() { return m_text; }
+    float &getX() { return m_x; }
+    float &getY() { return m_y; }
+    float &getSpeedX() { return m_sx; }
+    float &getSpeedY() { return m_sy; }
+    float &getRadius() { return m_radius; }
+    int &getRed() { return m_r; }
+    int &getGreen() { return m_g; };
+    int &getBlue() { return m_b; }
+
+    void createText(const MyFont &font)
+    {
+        m_text.setFont(font.getFont());
+        m_text.setCharacterSize(font.getSize());
+        m_text.setFillColor(sf::Color(font.getRed(), font.getGreen(), font.getBlue()));
+
+        m_text.setPosition(sf::Vector2f(m_x + m_radius - (m_text.getGlobalBounds().width / 2), m_y + m_radius - (m_text.getGlobalBounds().height / 2)));
+    }
+
     void readFromFile(std::ifstream &fin)
     {
         // helper var so store the name
@@ -85,6 +150,30 @@ public:
         m_shape.setRadius(m_radius);
         m_shape.setPosition(sf::Vector2f(m_x, m_y));
         m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
+    }
+
+    void drawAnimation(sf::RenderWindow &window, sf::VideoMode &videoMode)
+    {
+        sf::Vector2f previousPos = m_shape.getPosition();
+
+        if (previousPos.x < 0 || (previousPos.x + (m_radius * 2)) > videoMode.width)
+        {
+            m_sx *= -1.0f;
+        }
+
+        if (previousPos.y < 0 || (previousPos.y + (m_radius * 2)) > videoMode.height)
+        {
+            m_sy *= -1.0f;
+        }
+
+        sf::Vector2f newPosShape(m_shape.getPosition().x + m_sx, m_shape.getPosition().y + m_sy);
+        sf::Vector2f newPosText(m_text.getPosition().x + m_sx, m_text.getPosition().y + m_sy);
+
+        m_shape.setPosition(newPosShape);
+        m_text.setPosition(newPosText);
+
+        window.draw(m_shape);
+        window.draw(m_text);
     }
 };
 
@@ -103,16 +192,17 @@ int main(int argc, char const *argv[])
     // helper variable to id what is read from the file;
     std::string id;
 
-    // read from file
-
+    // read configuration from file
     std::ifstream fin("config.txt");
 
+    // check if file is open successfully
     if (!fin)
     {
         std::cerr << "Failed to open the configuration file" << std::endl;
         exit(-1);
     }
 
+    // do the actual reading of the objects
     while (fin >> id)
     {
         if (id == "Window")
@@ -127,12 +217,14 @@ int main(int argc, char const *argv[])
         {
             Circle circle;
             circle.readFromFile(fin);
+            circle.createText(font);
             circles.push_back(circle);
         }
         else
         {
             Rectangle rectangle;
             rectangle.readFromFile(fin);
+            rectangle.createText(font);
             rectangles.push_back(rectangle);
         }
     }
@@ -248,6 +340,16 @@ int main(int argc, char const *argv[])
         if (drawText)
         {
             window.draw(text);
+        }
+
+        for (auto &shape : circles)
+        {
+            shape.drawAnimation(window, videoMode);
+        }
+
+        for (auto &shape : rectangles)
+        {
+            shape.drawAnimation(window, videoMode);
         }
 
         ImGui::SFML::Render(window);
