@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 // classes
 
@@ -42,8 +43,9 @@ class Rectangle
 {
     sf::RectangleShape m_shape;
     sf::Text m_text;
+    std::string m_name;
     float m_x, m_y, m_sx, m_sy, m_width, m_height;
-    int m_r, m_g, m_b;
+    float m_r, m_g, m_b;
     bool m_isShapeDrawn = true;
     float m_uiColor[3]{0.0f};
 
@@ -54,15 +56,16 @@ public:
 
     sf::RectangleShape &getShape() { return m_shape; }
     sf::Text &getText() { return m_text; }
+    std::string &getName() { return m_name; }
     float &getX() { return m_x; }
     float &getY() { return m_y; }
     float &getSpeedX() { return m_sx; }
     float &getSpeedY() { return m_sy; }
     float &getWidth() { return m_width; }
     float &getHeight() { return m_height; }
-    int &getRed() { return m_r; }
-    int &getGreen() { return m_g; };
-    int &getBlue() { return m_b; }
+    float &getRed() { return m_r; }
+    float &getGreen() { return m_g; };
+    float &getBlue() { return m_b; }
     bool &getIsShapeDrawn() { return m_isShapeDrawn; }
     float *getUiColor() { return m_uiColor; }
 
@@ -81,11 +84,8 @@ public:
 
     void readFromFile(std::ifstream &fin)
     {
-        // helper var so store the name
-        std::string name;
-
-        fin >> name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_width >> m_height;
-        m_text.setString(name);
+        fin >> m_name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_width >> m_height;
+        m_text.setString(m_name);
         m_shape.setSize(sf::Vector2f(m_width, m_height));
         m_shape.setPosition(sf::Vector2f(m_x, m_y));
         m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
@@ -126,8 +126,9 @@ class Circle
 {
     sf::CircleShape m_shape;
     sf::Text m_text;
+    std::string m_name;
     float m_x, m_y, m_sx, m_sy, m_radius;
-    int m_r, m_g, m_b;
+    float m_r, m_g, m_b;
     bool m_isShapeDrawn = true;
     float m_uiColor[3]{0.0f};
 
@@ -138,14 +139,15 @@ public:
 
     sf::CircleShape &getShape() { return m_shape; }
     sf::Text &getText() { return m_text; }
+    std::string &getName() { return m_name; }
     float &getX() { return m_x; }
     float &getY() { return m_y; }
     float &getSpeedX() { return m_sx; }
     float &getSpeedY() { return m_sy; }
     float &getRadius() { return m_radius; }
-    int &getRed() { return m_r; }
-    int &getGreen() { return m_g; }
-    int &getBlue() { return m_b; }
+    float &getRed() { return m_r; }
+    float &getGreen() { return m_g; }
+    float &getBlue() { return m_b; }
     bool &getIsShapeDrawn() { return m_isShapeDrawn; }
     float *getUiColor() { return m_uiColor; }
 
@@ -160,11 +162,8 @@ public:
 
     void readFromFile(std::ifstream &fin)
     {
-        // helper var so store the name
-        std::string name;
-
-        fin >> name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_radius;
-        m_text.setString(name);
+        fin >> m_name >> m_x >> m_y >> m_sx >> m_sy >> m_r >> m_g >> m_b >> m_radius;
+        m_text.setString(m_name);
         m_shape.setRadius(m_radius);
         m_shape.setPosition(sf::Vector2f(m_x, m_y));
         m_shape.setFillColor(sf::Color(m_r, m_g, m_b));
@@ -302,7 +301,7 @@ int main(int argc, char const *argv[])
         // update imgui for this frame with the time that the last frame took
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        // ImGui::ShowDemoWindow();
+        ImGui::ShowDemoWindow();
 
         // draw the UI
         ImGui::Begin("Control Panel");
@@ -349,6 +348,12 @@ int main(int argc, char const *argv[])
             ImGui::SliderFloat("X velocity", &rectangles[tempIndex].getSpeedX(), -8.0f, 8.0f);
             ImGui::SliderFloat("Y velocity", &rectangles[tempIndex].getSpeedY(), -8.0f, 8.0f);
             ImGui::ColorEdit3("Color", rectangles[tempIndex].getUiColor());
+            ImGui::InputText("##", &rectangles[tempIndex].getName());
+            ImGui::SameLine();
+            if (ImGui::Button("Change name"))
+            {
+                rectangles[tempIndex].getText().setString(rectangles[tempIndex].getName());
+            }
 
             ImGui::End();
 
@@ -367,6 +372,12 @@ int main(int argc, char const *argv[])
             ImGui::SliderFloat("X velocity", &circles[currentIndex].getSpeedX(), -8.0f, 8.0f);
             ImGui::SliderFloat("Y velocity", &circles[currentIndex].getSpeedY(), -8.0f, 8.0f);
             ImGui::ColorEdit3("Color", circles[currentIndex].getUiColor());
+            ImGui::InputText("##", &circles[currentIndex].getName());
+            ImGui::SameLine();
+            if (ImGui::Button("Change name"))
+            {
+                circles[currentIndex].getText().setString(circles[currentIndex].getName());
+            }
 
             ImGui::End();
 
