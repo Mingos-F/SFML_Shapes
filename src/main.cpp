@@ -301,7 +301,7 @@ int main(int argc, char const *argv[])
         // update imgui for this frame with the time that the last frame took
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
 
         // draw the UI
         ImGui::Begin("Control Panel");
